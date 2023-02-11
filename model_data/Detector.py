@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import time
 
+np.random.seed(20)
 class Detector:
     def __init__(self,videoPath,configPath,modelPath,classesPath):
         self.videoPath = videoPath
@@ -22,11 +23,9 @@ class Detector:
         with open(self.classesPath,'r') as f:
             self.classesList = f.read().splitlines()
 
-        #self.classesList.index(0, '__Background__')
-
         self.colorList = np.random.uniform(low=0,high=255, size=(len(self.classesList), 3))
 
-        #print(self.classesList)
+        
 
     def onVideo(self):
         cap = cv2.VideoCapture(self.videoPath)
@@ -44,7 +43,7 @@ class Detector:
             currentTime = time.time()
             fps = 1/(currentTime - startTime)
             startTime = currentTime
-            classLablIDs, confidences, bboxes = self.net.detect(image, confThreshold = 0.5)
+            classLabelIDs, confidences, bboxes = self.net.detect(image, confThreshold = 0.5)
             bboxes = list(bboxes)
             confidences = list(np.array(confidences).reshape(1,-1)[0])
             confidences = list(map(float,confidences))
@@ -56,11 +55,11 @@ class Detector:
 
                     bbox = bboxes[np.squeeze(bboxIdx[i])]
                     classConfidence = confidences[np.squeeze(bboxIdx[i])]
-                    classLablIDs = np.squeeze(classLablIDs[np.squeeze(bboxIdx[i])])
-                    classLable = self.classesList[classLablIDs]
-                    classColor = [int(c) for c in self.colorList[classLablIDs]]
+                    classLabelID = np.squeeze(classLabelIDs[np.squeeze(bboxIdx[i])])
+                    classLabel = self.classesList[classLabelID]
+                    classColor = [int(c) for c in self.colorList[classLabelID]]
 
-                    displayText = "{}:{:.2f}".format(classLable, classConfidence)
+                    displayText = "{}:{:.2f}".format(classLabel, classConfidence)
 
 
                     x,y,w,h = bbox
@@ -74,6 +73,16 @@ class Detector:
                     cv2.line(image, (x,y),(x+lineWidth,y),classColor,thickness=5)
                     cv2.line(image, (x,y),(x, y+lineWidth),classColor,thickness=5)
 
+                    cv2.line(image, (x+w,y),(x+w-lineWidth,y),classColor,thickness=5)
+                    cv2.line(image, (x+w,y),(x+w, y+lineWidth),classColor,thickness=5)
+                ###############################################################################
+                    cv2.line(image, (x,y + h),(x + lineWidth,y + h),classColor,thickness=5)
+                    cv2.line(image, (x,y + h),(x, y + h - lineWidth),classColor,thickness=5)
+
+                    cv2.line(image, (x + w, y + h),(x + w - lineWidth,y + h),classColor,thickness=5)
+                    cv2.line(image, (x + w,y + h),(x + w, y + h - lineWidth),classColor,thickness=5)
+
+
 
 
             cv2.putText(image, "FPS: " + str(int(fps)), (20, 70), cv2.FONT_HERSHEY_PLAIN, 2, (255,0,0), 2)
@@ -84,7 +93,7 @@ class Detector:
 
                 
             (success, image) = cap.read()
-            cv2.destroyAllWindows() 
+        cv2.destroyAllWindows() 
 
 
 
